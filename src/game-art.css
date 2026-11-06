@@ -355,3 +355,78 @@
   .pro-reel,
   .poker-card { animation: none !important; transition-duration: .01ms !important; }
 }
+
+.catalog-switch { display:flex; align-items:center; gap:7px; margin:0 0 15px; }
+.catalog-switch button { min-height:32px; padding:0 12px; border:1px solid rgba(255,255,255,.1); border-radius:7px; background:#191920; color:#aaa6b1; font-size:9px; font-weight:700; cursor:pointer; }
+.catalog-switch button span { margin-left:5px; color:#dfc783; }
+.catalog-switch button.source-active { border-color:#dfc78380; background:#dfc78317; color:#f1d78f; }
+.catalog-switch button.source-disconnect { margin-left:auto; color:#e79b9b; }
+.cover-studio { max-width:calc(100% - 44px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.game-grid .game-type { line-height:1.4; }
+.slotopol-connect .auth-legal code { color:#dfc783; }
+.slotopol-game-modal { width:min(580px,100%); }
+.slotopol-game-body { padding:17px 20px 19px; }
+.slotopol-game-banner { display:grid; justify-items:center; gap:5px; padding:8px 0 15px; text-align:center; }
+.slotopol-game-banner span,.slotopol-game-banner small { color:#d5b66e; font:700 7px 'DM Sans',sans-serif; letter-spacing:1.5px; text-transform:uppercase; }
+.slotopol-game-banner b { font:700 21px 'Space Grotesk',sans-serif; }
+.slotopol-keno-board { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:5px; width:min(100%,440px); margin:0 auto; padding:11px; border:1px solid #ffffff16; border-radius:10px; background:#10141c; }
+.slotopol-keno-board button { aspect-ratio:1; min-width:0; padding:0; border:1px solid #ffffff16; border-radius:50%; background:#262a34; color:#d4d0d9; font-size:clamp(8px,2.4vw,11px); cursor:pointer; transition:transform .15s ease,background .15s ease,border-color .15s ease; }
+.slotopol-keno-board button:hover { transform:translateY(-2px); border-color:#dfc78388; }
+.slotopol-keno-board button.number-picked { border-color:#dfc783; background:#dfc783; color:#231d17; font-weight:800; }
+.slotopol-keno-board button.number-drawn { border-color:#5acda0; background:#175c4c; color:#e7fff3; }
+.slotopol-keno-board button.number-picked.number-drawn { border-color:#f5dc82; background:#d0ad56; color:#211c15; box-shadow:0 0 12px #f5dc8240; }
+.slotopol-keno-board button:disabled { cursor:wait; }
+.slotopol-reel-frame { display:grid; gap:5px; width:min(100%,440px); margin:0 auto; padding:12px; border:2px solid #d6b264; border-radius:12px; background:linear-gradient(145deg,#f8f2e7,#d7c8aa); box-shadow:0 0 0 4px #654c38,0 15px 32px #0007; }
+.slotopol-reel-row { display:grid; grid-auto-columns:minmax(0,1fr); grid-auto-flow:column; gap:5px; }
+.slotopol-symbol { display:grid; min-width:0; aspect-ratio:1.05; place-items:center; border-radius:5px; background:linear-gradient(145deg,#fffdf5,#e5dcc9); color:#29242b; font-size:clamp(22px,6vw,36px); box-shadow:inset 0 0 0 1px #b8aa8d,0 2px 3px #4e3b2a25; }
+.slotopol-game-facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:17px 0 13px; }
+.slotopol-game-facts span { display:grid; gap:5px; min-width:0; padding:9px 8px; border:1px solid #ffffff12; border-radius:7px; background:#ffffff06; }
+.slotopol-game-facts small,.slotopol-wallet small { color:#8f8998; font-size:6px; font-weight:700; letter-spacing:1px; }
+.slotopol-game-facts b { overflow:hidden; color:#e8e2ee; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+.slotopol-controls { display:grid; grid-template-columns:1fr 1fr 1.15fr; align-items:end; gap:9px; }
+.slotopol-controls label { display:grid; gap:5px; color:#b3aeb9; font-size:8px; font-weight:700; }
+.slotopol-controls input { width:100%; height:37px; padding:0 9px; border:1px solid #ffffff19; border-radius:7px; outline:0; background:#111117; color:#f6f1fa; font-size:11px; }
+.slotopol-controls input:focus { border-color:#d6b264; }
+.slotopol-wallet { display:grid; gap:5px; min-height:37px; align-content:center; padding:0 9px; border:1px solid #ffffff13; border-radius:7px; background:#ffffff06; }
+.slotopol-wallet b { color:#e5c779; font:700 12px 'Space Grotesk',sans-serif; }
+.slotopol-spin { height:43px; margin-top:12px; }
+.slotopol-result,.slotopol-error { margin:10px 0 0; text-align:center; font-size:9px; }
+.slotopol-result { color:#9fe0bb; }
+.slotopol-error { color:#ff9b9b; }
+.slotopol-game-modal .demo-note { line-height:1.5; }
+.slotopol-game-modal .close-button:disabled { opacity:.5; cursor:wait; }
+.slotopol-monogram { color:#fff4d1; font:700 clamp(24px,4vw,36px)/1 'Space Grotesk',sans-serif; letter-spacing:0; text-shadow:0 2px 9px rgba(0,0,0,.55); }
+.game-logo-compact .slotopol-monogram { font-size:17px; }
+.slotopol-lobby-banner { display:flex; align-items:center; gap:12px; margin:0 0 13px; padding:12px 14px; border:1px solid rgba(212,180,110,.22); border-radius:9px; background:linear-gradient(100deg,rgba(212,180,110,.1),rgba(22,25,32,.88) 65%); }
+.slotopol-lobby-banner.server-connected { border-color:rgba(112,203,156,.25); background:linear-gradient(100deg,rgba(70,170,125,.1),rgba(22,25,32,.88) 65%); }
+.slotopol-banner-mark { display:grid; width:34px; height:34px; flex:0 0 34px; place-items:center; border:1px solid rgba(231,199,121,.46); border-radius:9px; background:radial-gradient(circle at 30% 20%,#f0d283,#9a6334); color:#211a15; font:700 19px 'Space Grotesk',sans-serif; box-shadow:0 5px 16px rgba(0,0,0,.22); }
+.server-connected .slotopol-banner-mark { border-color:rgba(137,231,184,.4); background:radial-gradient(circle at 30% 20%,#b5f0cf,#3a9268); }
+.slotopol-lobby-banner>div { display:grid; min-width:0; gap:4px; }
+.slotopol-lobby-banner strong { overflow:hidden; color:#f0e7d4; font:700 11px 'Space Grotesk',sans-serif; text-overflow:ellipsis; white-space:nowrap; }
+.slotopol-lobby-banner small { color:#aaa6b1; font-size:8px; line-height:1.45; }
+.slotopol-lobby-banner>button { display:flex; min-height:32px; align-items:center; gap:8px; margin-left:auto; padding:0 11px; border:1px solid rgba(231,199,121,.38); border-radius:7px; background:#dfc783; color:#211a15; font-size:8px; font-weight:800; white-space:nowrap; cursor:pointer; }
+.server-connected>button { border-color:rgba(137,231,184,.28); background:#25382f; color:#a9e3c2; }
+.slotopol-lobby-banner>button span { font-size:12px; }
+.game-art .slotopol-monogram { border:1px solid rgba(255,255,255,.12); border-radius:12px; background:radial-gradient(circle at 35% 22%,color-mix(in srgb,var(--logo-accent) 48%,#37313c),#15151d 74%); box-shadow:inset 0 1px rgba(255,255,255,.2),0 9px 20px rgba(0,0,0,.4); }
+.slotopol-monogram::selection { background:transparent; }
+.game-art .cover-studio { z-index:4; }
+.game-art .game-logo-label { max-width:80%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@media (max-width:650px) {
+  .catalog-switch { flex-wrap:wrap; gap:6px; }
+  .catalog-switch button { min-height:30px; padding:0 9px; font-size:8px; }
+  .slotopol-lobby-banner { gap:8px; padding:9px; }
+  .slotopol-banner-mark { width:29px; height:29px; flex-basis:29px; font-size:16px; }
+  .slotopol-lobby-banner strong { font-size:9px; }
+  .slotopol-lobby-banner small { font-size:7px; }
+  .slotopol-lobby-banner>button { min-height:29px; padding:0 8px; font-size:7px; }
+  .slotopol-game-body { padding:12px 13px 15px; }
+  .slotopol-game-banner b { font-size:18px; }
+  .slotopol-keno-board { grid-template-columns:repeat(8,minmax(0,1fr)); gap:4px; padding:8px; }
+  .slotopol-keno-board button { font-size:10px; }
+  .slotopol-reel-frame { padding:8px; gap:4px; }
+  .slotopol-reel-row { gap:4px; }
+  .slotopol-game-facts { grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; margin:13px 0 10px; }
+  .slotopol-game-facts span { padding:7px; }
+  .slotopol-controls { grid-template-columns:1fr 1fr; }
+  .slotopol-wallet { grid-column:1 / -1; }
+}

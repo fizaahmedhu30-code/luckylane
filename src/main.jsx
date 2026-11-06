@@ -2,31 +2,28 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './game-art.css';
+import { slotopolCatalog } from './slotopol-catalog.js';
 
-const baseGameCatalog = [
-  ['Fortune Reels', '🎰', 'Slots', 'amber'], ['Royal Blackjack', '♠️', 'Blackjack', 'emerald'],
-  ['Star Roulette', '🎡', 'Roulette', 'ruby'], ['Skybound', '🛩️', 'Crash', 'sky'],
-  ['Rocket Ride', '🚀', 'Crash', 'violet'], ['Plinko Party', '🔵', 'Plinko', 'cyan'],
-  ['Gem Mines', '💎', 'Mines', 'teal'], ['Tower of Luck', '🗼', 'Tower', 'indigo'],
-  ['Lucky Keno', '🎯', 'Keno', 'blue'], ['Golden Wheel', '☸️', 'Wheel', 'gold'],
-  ['Dragon Baccarat', '🐉', 'Baccarat', 'red'], ['Scratch Society', '🎟️', 'Scratch', 'pink'],
+const demoGameCatalog = [
+  ['Aurora Wilds', '🌙', 'Slots', 'violet'], ['Velvet Royale', '👑', 'Blackjack', 'amber'],
+  ['Solar Spin', '☀️', 'Roulette', 'gold'], ['Skyline Rush', '🚀', 'Crash', 'sky'],
+  ['Crystal Plinko', '🔵', 'Plinko', 'cyan'], ['Gem Vault', '💎', 'Mines', 'teal'],
+  ['Temple Peak', '🗼', 'Tower', 'indigo'], ['Lucky Orbit', '🎯', 'Keno', 'blue'],
+  ['Golden Drift', '☸️', 'Wheel', 'gold'], ['Dragon House', '🐉', 'Baccarat', 'red'],
+  ['Lucky Scratch', '🎟️', 'Scratch', 'pink'], ['Blackout Jack', '♠️', 'Blackjack', 'emerald'],
 ];
-const famousGameCatalog = [
-  ['Book of Ra', '📖', 'Slots', 'amber'], ['Starburst', '✨', 'Slots', 'cyan'], ['Gates of Olympus', '⚡', 'Slots', 'violet'],
-  ['Sweet Bonanza', '🍬', 'Slots', 'pink'], ['Big Bass Bonanza', '🐟', 'Slots', 'blue'], ['Wolf Gold', '🐺', 'Slots', 'gold'],
-  ['Legacy of Dead', '🪦', 'Slots', 'amber'], ['Reactoonz', '🪐', 'Slots', 'teal'], ['Buffalo King', '🐂', 'Slots', 'emerald'],
-  ['Thunderstruck II', '⚡', 'Slots', 'gold'], ['Mega Moolah', '🦁', 'Slots', 'red'], ['Aztec Gold', '🏺', 'Slots', 'gold'],
-  ['Dead or Alive', '🔫', 'Slots', 'ruby'], ['Fruit Spin', '🍇', 'Slots', 'amber'], ['Lucky Larry', '🐠', 'Slots', 'sky'],
-  ['Diamond Mine', '💠', 'Slots', 'cyan'], ['Temple of Fire', '🔥', 'Slots', 'red'], ['Hot Fruits', '🍋', 'Slots', 'gold'],
-  ['Queen of the Nile', '👑', 'Slots', 'emerald'], ['Royal Panda', '🐼', 'Slots', 'indigo'],
-];
-const gameCatalog = [...baseGameCatalog, ...famousGameCatalog];
-const themes = ['Moon Temple', 'Neon Nights', 'Wild Safari', 'Ocean Treasures', 'Mystic Garden', 'Desert Gold', 'Candy Carnival', 'Jungle Quest', 'Arctic Lights', 'Cosmic Rush'];
-const themeIcons = ['🌙', '🌃', '🦁', '🪼', '🌸', '💎', '🍭', '🌿', '❄️', '🪐'];
-const games = gameCatalog.flatMap(([title, emoji, mode, palette], group) => themes.map((theme, index) => ({
-  id: group * 10 + index + 1, title: `${theme} ${title}`, emoji, mode, palette, themeIndex: index, themeIcon: themeIcons[index],
-  featured: index === 0 && group < 3, studio: 'LuckyLane Originals',
-})));
+const games = demoGameCatalog.map(([title, emoji, mode, palette], index) => ({
+  id: `demo:${index + 1}`,
+  title,
+  emoji,
+  mode,
+  palette,
+  themeIndex: index % 10,
+  themeIcon: ['🌙', '🌃', '🦁', '🪼', '🌸', '💎', '🍭', '🌿', '❄️', '🪐'][index % 10],
+  featured: index < 3,
+  studio: 'LuckyLane Originals',
+  source: 'luckylane',
+}));
 const lobbyTabs = ['All games', 'Popular', 'New releases', 'Jackpot', 'Exclusive'];
 const categories = ['All games', 'Slots', 'Blackjack', 'Roulette', 'Crash', 'Plinko', 'Mines', 'Tower', 'Keno', 'Wheel', 'Baccarat', 'Scratch'];
 const modes = { Slots: 'Video slot', Blackjack: 'Blackjack', Roulette: 'European roulette', Crash: 'Crash game', Plinko: 'Plinko', Mines: 'Mines', Tower: 'Tower climb', Keno: 'Keno', Wheel: 'Prize wheel', Baccarat: 'Baccarat', Scratch: 'Scratch card' };
@@ -38,14 +35,25 @@ const rouletteRed = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 
 const slotopolPrefix = '/slotopol';
 
 async function slotopolRequest(path, { token, method = 'GET', body } = {}) {
-  const response = await fetch(`${slotopolPrefix}${path}`, {
-    method,
-    headers: {
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 30000);
+  let response;
+  try {
+    response = await fetch(`${slotopolPrefix}${path}`, {
+      method,
+      headers: {
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error('Slotopol took too long to respond. Try again or check the server logs.');
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.what || payload.error || `Slotopol request failed (${response.status})`);
   return payload.ret || payload;
@@ -76,35 +84,51 @@ function App() {
   const [account, setAccount] = useState(() => localStorage.getItem('luckylane-demo-session') || '');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('register');
-  const [slotopolSession, setSlotopolSession] = useState(() => JSON.parse(sessionStorage.getItem('luckylane-slotopol-session') || 'null'));
+  const [pendingDemoGame, setPendingDemoGame] = useState(null);
+  const [slotopolSession, setSlotopolSession] = useState(null);
   const [slotopolGames, setSlotopolGames] = useState([]);
   const [slotopolOpen, setSlotopolOpen] = useState(false);
   const [slotopolError, setSlotopolError] = useState('');
   const [slotopolBusy, setSlotopolBusy] = useState(false);
-  const [catalogSource, setCatalogSource] = useState('luckylane');
+  const [slotopolLaunching, setSlotopolLaunching] = useState(false);
+  const [pendingSlotopolGame, setPendingSlotopolGame] = useState(null);
+  const [catalogSource, setCatalogSource] = useState('slotopol');
 
   useEffect(() => localStorage.setItem('luckylane-balance', String(balance)), [balance]);
   useEffect(() => localStorage.setItem('luckylane-plays', String(plays)), [plays]);
   useEffect(() => localStorage.setItem('luckylane-favorites', JSON.stringify(favorites)), [favorites]);
 
-  const catalogGames = catalogSource === 'slotopol' ? slotopolGames : games;
+  const catalogGames = catalogSource === 'slotopol' ? slotopolGames.length ? slotopolGames : slotopolCatalog : games;
+  const providerCategories = ['All games', ...new Set(catalogGames.map((game) => game.provider).filter(Boolean).sort())];
   const filteredGames = useMemo(() => catalogGames.filter((game) => {
-    const matchesText = game.title.toLowerCase().includes(query.toLowerCase()) || game.mode.toLowerCase().includes(query.toLowerCase());
+    const matchesText = `${game.title} ${game.mode} ${game.provider || ''}`.toLowerCase().includes(query.toLowerCase());
     const matchesTab = catalogSource === 'slotopol' || lobbyTab === 'All games' || lobbyTab === 'Popular' && game.id <= 24 || lobbyTab === 'New releases' && game.id > 96 || lobbyTab === 'Jackpot' && game.mode === 'Slots' || lobbyTab === 'Exclusive' && game.id % 4 === 0;
-    return matchesText && matchesTab && (category === 'All games' || game.mode === category) && (!favoritesOnly || favorites.includes(game.id));
+    const matchesCategory = category === 'All games' || (catalogSource === 'slotopol' ? game.provider === category : game.mode === category);
+    return matchesText && matchesTab && matchesCategory && (!favoritesOnly || favorites.includes(game.id));
   }), [catalogGames, catalogSource, category, favorites, favoritesOnly, lobbyTab, query]);
-  const featuredGames = games.filter((game) => game.featured);
+  const featuredGames = catalogSource === 'slotopol'
+    ? slotopolCatalog.filter((game) => ['Book of Ra', 'Dolphins Pearl', "Gonzo's Quest"].includes(game.title)).slice(0, 3)
+    : games.filter((game) => game.featured);
 
   function toggleFavorite(id) {
     setFavorites((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   }
   function startGame(game) {
     if (game.source === 'slotopol') {
-      if (!slotopolSession) {
-        setSlotopolOpen(true);
-        setSlotopolError('Connect your Slotopol demo account before launching its games.');
+      if (!account) {
+        setPendingDemoGame(game);
+        setAuthMode('register');
+        setAuthOpen(true);
         return;
       }
+      if (!slotopolSession) {
+        setPendingSlotopolGame(game);
+        setSlotopolOpen(true);
+        setSlotopolError('Sign in to your Slotopol server account to play this real game.');
+        return;
+      }
+      launchSlotopolGame(game, slotopolSession);
+      return;
     }
     setActiveGame(game);
     setBet(50);
@@ -123,6 +147,25 @@ function App() {
   function refill() {
     setBalance((current) => current + 5000);
     setNotice('5,000 free demo credits added. Have fun!');
+  }
+
+  async function launchSlotopolGame(game, session) {
+    setSlotopolLaunching(true);
+    setSlotopolError('');
+    try {
+      const created = await slotopolRequest('/game/new', {
+        token: session.token,
+        method: 'POST',
+        body: { cid: session.clubId, uid: session.uid, alias: game.alias },
+      });
+      if (!created.gid) throw new Error('Slotopol did not return a game session.');
+      setActiveGame({ ...game, gid: Number(created.gid), initialState: created.game, wallet: Number(created.wallet) });
+      setNotice('');
+    } catch (error) {
+      setNotice(error.message || 'Could not open this Slotopol game.');
+    } finally {
+      setSlotopolLaunching(false);
+    }
   }
 
   async function connectSlotopol(event) {
@@ -147,25 +190,41 @@ function App() {
       const remoteGames = (Array.isArray(algorithms) ? algorithms : algorithms.algs || []).flatMap((algorithm) => (algorithm.aliases || []).map((alias) => ({
         id: `slotopol:${alias.prov}:${alias.name}`,
         title: alias.name,
+        mark: (alias.name.match(/[A-Za-z0-9]+/g) || ['S']).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
         provider: alias.prov,
         alias: `${alias.prov}/${alias.name}`,
-        mode: 'Slots',
+        mode: Number(algorithm.gt) === 2 ? 'Keno' : 'Slots',
         emoji: '🎰',
         themeIcon: '✨',
         palette: 'amber',
         themeIndex: 0,
         source: 'slotopol',
         studio: `${alias.prov} · Slotopol simulation`,
+        width: Number(algorithm.gt) === 2 ? 80 : Number(algorithm.sx) || 5,
+        height: Number(algorithm.gt) === 2 ? 1 : Number(algorithm.sy) || 3,
+        lines: alias.lnum || algorithm.ln || 0,
         rtp: algorithm.rtp,
       })));
-      if (!remoteGames.length) throw new Error('The Slotopol server returned no slot aliases. Check that games are enabled.');
-      setSlotopolGames(remoteGames);
+      const uniqueRemoteGames = [];
+      const seenAliases = new Set();
+      for (const game of remoteGames) {
+        const key = `${game.provider}:${game.alias}`;
+        if (seenAliases.has(key)) continue;
+        seenAliases.add(key);
+        uniqueRemoteGames.push(game);
+      }
+
+      if (!uniqueRemoteGames.length) throw new Error('The Slotopol server returned no slot aliases. Check that games are enabled.');
+      setSlotopolGames(uniqueRemoteGames);
       setSlotopolSession(session);
-      sessionStorage.setItem('luckylane-slotopol-session', JSON.stringify(session));
       setCatalogSource('slotopol');
       setCategory('All games');
       setLobbyTab('All games');
+      const pendingGame = pendingSlotopolGame && remoteGames.find((game) => game.alias === pendingSlotopolGame.alias);
+      setPendingSlotopolGame(null);
       setSlotopolOpen(false);
+      setSlotopolError('');
+      if (pendingGame) await launchSlotopolGame(pendingGame, session);
     } catch (error) {
       setSlotopolError(error.message || 'Could not connect to Slotopol. Check the proxy, server, and credentials.');
     } finally {
@@ -174,10 +233,9 @@ function App() {
   }
 
   function disconnectSlotopol() {
-    sessionStorage.removeItem('luckylane-slotopol-session');
     setSlotopolSession(null);
     setSlotopolGames([]);
-    setCatalogSource('luckylane');
+    setCatalogSource('slotopol');
   }
 
   return <div className="app-shell">
@@ -189,7 +247,7 @@ function App() {
         <a className="nav-link" href="#games" onClick={() => { setLobbyTab('All games'); setCategory('All games'); setMobileMenu(false); }}>All games</a>
         <button className={`nav-link ${category === 'Crash' ? 'active' : ''}`} onClick={() => { setCategory('Crash'); setLobbyTab('All games'); document.querySelector('#games')?.scrollIntoView(); setMobileMenu(false); }}>Crash</button>
         <button className={`nav-link ${favoritesOnly ? 'active' : ''}`} onClick={() => { setFavoritesOnly(!favoritesOnly); setMobileMenu(false); }}>♡ Favorites</button>
-        <button className={`nav-link ${catalogSource === 'slotopol' ? 'active' : ''}`} onClick={() => { if (slotopolSession) { setCatalogSource('slotopol'); setCategory('All games'); document.querySelector('#games')?.scrollIntoView(); } else setSlotopolOpen(true); setMobileMenu(false); }}>Slotopol games</button>
+        <button className={`nav-link ${catalogSource === 'slotopol' ? 'active' : ''}`} onClick={() => { setCatalogSource('slotopol'); setCategory('All games'); document.querySelector('#games')?.scrollIntoView(); setMobileMenu(false); }}>Slotopol games</button>
       </nav>
       <div className="header-actions">
         <div className="balance-pill"><span className="coin">✦</span><span className="balance-copy"><small>DEMO CREDITS</small><strong>{money(balance)}</strong></span></div>
@@ -224,28 +282,29 @@ function App() {
       </section>
 
       <section className="featured-section wrap">
-        <div className="section-heading"><div><div className="eyebrow">A LITTLE SOMETHING SPECIAL</div><h2>Hot right now <span className="heading-spark">✦</span></h2></div><a href="#games" className="text-link">See all games <span>→</span></a></div>
+        <div className="section-heading"><div><div className="eyebrow">{catalogSource === 'slotopol' ? 'FROM THE SLOTOPOL LIBRARY' : 'A LITTLE SOMETHING SPECIAL'}</div><h2>{catalogSource === 'slotopol' ? 'Standout titles' : 'Hot right now'} <span className="heading-spark">✦</span></h2></div><a href="#games" className="text-link">See all games <span>→</span></a></div>
         <div className="featured-grid">{featuredGames.map((game, i) => <GameCard key={game.id} game={game} index={i} favorite={favorites.includes(game.id)} onFavorite={toggleFavorite} onPlay={startGame} featured />)}</div>
       </section>
 
       <section className="games-section wrap" id="games">
-        <div className="section-heading game-heading"><div><div className="eyebrow">{catalogSource === 'slotopol' ? 'SELF-HOSTED SLOT SIMULATIONS' : 'THE LUCKY LANE COLLECTION'}</div><h2>{catalogSource === 'slotopol' ? 'Slotopol game catalog' : 'Find your next favorite'} <span className="library-count">{catalogGames.length} GAMES</span></h2></div><label className="search-box"><span>⌕</span><input aria-label="Search games" placeholder="Search games..." value={query} onChange={(event) => setQuery(event.target.value)} /><kbd>⌘ K</kbd></label></div>
-        <div className="catalog-switch"><button className={catalogSource === 'luckylane' ? 'source-active' : ''} onClick={() => setCatalogSource('luckylane')}>LuckyLane originals <span>120</span></button><button className={catalogSource === 'slotopol' ? 'source-active' : ''} onClick={() => { if (slotopolSession) setCatalogSource('slotopol'); else { setSlotopolError('Connect to your Slotopol server to load its catalog.'); setSlotopolOpen(true); } }}>Slotopol server {slotopolSession && <span>{slotopolGames.length}</span>}</button>{slotopolSession && <button className="source-disconnect" onClick={disconnectSlotopol}>Disconnect</button>}</div>
+        <div className="section-heading game-heading"><div><div className="eyebrow">{catalogSource === 'slotopol' ? slotopolSession ? 'REAL SLOTOPOL ENGINE · SERVER WALLET' : 'SLOTOPOL ENGINE · SERVER REQUIRED TO PLAY' : 'THE LUCKY LANE COLLECTION'}</div><h2>{catalogSource === 'slotopol' ? 'Slotopol games' : 'Find your next favorite'} <span className="library-count">{catalogGames.length} GAMES</span></h2></div><label className="search-box"><span>⌕</span><input aria-label="Search games" placeholder="Search games..." value={query} onChange={(event) => setQuery(event.target.value)} /><kbd>⌘ K</kbd></label></div>
+        {catalogSource === 'slotopol' && <div className={`slotopol-lobby-banner ${slotopolSession ? 'server-connected' : ''}`}><span className="slotopol-banner-mark">S</span><div><strong>{slotopolSession ? `Slotopol connected · ${slotopolSession.email}` : '353 titles · 11 providers'}</strong><small>{slotopolSession ? `${slotopolGames.length} server titles · results and wallet come from Slotopol.` : account ? 'Connect a Slotopol server account to launch actual game rules.' : 'Sign in to LuckyLane, then connect a Slotopol server account to play.'}</small></div><button onClick={() => { if (!account) { setAuthMode('register'); setAuthOpen(true); } else if (slotopolSession) disconnectSlotopol(); else setSlotopolOpen(true); }}>{slotopolSession ? 'Disconnect' : !account ? 'Demo login' : 'Connect server'} <span>{slotopolSession ? '×' : '↗'}</span></button></div>}
+        <div className="catalog-switch"><button className={catalogSource === 'slotopol' ? 'source-active' : ''} onClick={() => { setCatalogSource('slotopol'); setCategory('All games'); }}>Slotopol games <span>{slotopolCatalog.length}</span></button><button className={catalogSource === 'luckylane' ? 'source-active' : ''} onClick={() => { setCatalogSource('luckylane'); setCategory('All games'); }}>LuckyLane originals <span>{games.length}</span></button></div>
         {catalogSource === 'luckylane' && <div className="lobby-tabs">{lobbyTabs.map((tab) => <button key={tab} className={`lobby-tab ${lobbyTab === tab ? 'selected' : ''}`} onClick={() => setLobbyTab(tab)}>{tab === 'Popular' ? '♨ ' : tab === 'Jackpot' ? '✦ ' : ''}{tab}</button>)}</div>}
-        <div className="catalog-toolbar"><div className="category-list">{categories.map((item) => <button key={item} className={`category-button ${category === item ? 'selected' : ''}`} onClick={() => setCategory(item)}>{item}</button>)}</div><span className="results-count">{filteredGames.length} games</span></div>
-        {filteredGames.length > 0 ? <div className="game-grid">{filteredGames.map((game, i) => <GameCard key={game.id} game={game} index={i} favorite={favorites.includes(game.id)} onFavorite={toggleFavorite} onPlay={startGame} />)}</div> : <div className="empty-state"><span>🃏</span><h3>No games found</h3><p>Try another search or category.</p><button className="button button-primary" onClick={() => { setQuery(''); setCategory('All games'); setFavoritesOnly(false); }}>Show all games</button></div>}
+        <div className="catalog-toolbar"><div className="category-list">{(catalogSource === 'slotopol' ? providerCategories : categories).map((item) => <button key={item} className={`category-button ${category === item ? 'selected' : ''}`} onClick={() => setCategory(item)}>{item}</button>)}</div><span className="results-count">{filteredGames.length} games</span></div>
+        {filteredGames.length > 0 ? <div className="game-grid">{filteredGames.map((game, i) => <GameCard key={game.id} game={game} index={i} favorite={favorites.includes(game.id)} onFavorite={toggleFavorite} onPlay={startGame} launching={slotopolLaunching && game.source === 'slotopol'} />)}</div> : <div className="empty-state"><span>🃏</span><h3>No games found</h3><p>Try another search or category.</p><button className="button button-primary" onClick={() => { setQuery(''); setCategory('All games'); setFavoritesOnly(false); }}>Show all games</button></div>}
       </section>
       <footer className="footer wrap"><a className="brand footer-brand" href="#home"><span className="brand-mark">L</span><span>lucky<span className="brand-light">lane</span><i>.</i></span></a><div className="footer-disclaimer"><span>✦</span> This is a free social casino experience. Demo credits have no cash value and are never redeemable.</div><span className="copyright">© 2026 LuckyLane</span></footer>
     </main>
 
     {notice && !activeGame && <div className="toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss">×</button></div>}
-    {authOpen && <AuthModal mode={authMode} setMode={setAuthMode} onClose={() => setAuthOpen(false)} onAuthenticated={(email) => { setAccount(email); localStorage.setItem('luckylane-demo-session', email); setAuthOpen(false); }} />}
-    {slotopolOpen && <SlotopolConnectModal error={slotopolError} busy={slotopolBusy} onClose={() => { setSlotopolOpen(false); setSlotopolError(''); }} onSubmit={connectSlotopol} />}
+    {authOpen && <AuthModal mode={authMode} setMode={setAuthMode} pendingGame={pendingDemoGame} onClose={() => { setAuthOpen(false); setPendingDemoGame(null); }} onAuthenticated={(email) => { setAccount(email); localStorage.setItem('luckylane-demo-session', email); setAuthOpen(false); if (pendingDemoGame) { setPendingSlotopolGame(pendingDemoGame); setPendingDemoGame(null); setSlotopolError('Sign in to your Slotopol server account to launch this real game.'); setSlotopolOpen(true); } }} />}
+    {slotopolOpen && <SlotopolConnectModal error={slotopolError} busy={slotopolBusy} onClose={() => { setSlotopolOpen(false); setSlotopolError(''); setPendingSlotopolGame(null); }} onSubmit={connectSlotopol} />}
     {activeGame && (activeGame.source === 'slotopol' ? <SlotopolGameModal game={activeGame} session={slotopolSession} onClose={() => setActiveGame(null)} /> : <ProfessionalGameModal game={activeGame} balance={balance} bet={bet} setBet={setBet} onClose={() => setActiveGame(null)} onPlay={play} onRefill={refill} notice={notice} setNotice={setNotice} />)}
   </div>;
 }
 
-function AuthModal({ mode, setMode, onClose, onAuthenticated }) {
+function AuthModal({ mode, setMode, pendingGame, onClose, onAuthenticated }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -284,7 +343,7 @@ function AuthModal({ mode, setMode, onClose, onAuthenticated }) {
       <div className="auth-brand"><span className="brand-mark">L</span></div>
       <div className="auth-eyebrow">YOUR LUCKY PLACE</div>
       <h2 id="auth-title">{mode === 'register' ? 'Join the fun' : 'Welcome back'}</h2>
-      <p className="auth-description">{mode === 'register' ? 'Create a free demo account to keep your favorites close.' : 'Log in to your local LuckyLane demo account.'}</p>
+      <p className="auth-description">{pendingGame ? mode === 'register' ? `Create a free demo account to play ${pendingGame.title} with local demo credits.` : `Log in to launch ${pendingGame.title} with your local demo account.` : mode === 'register' ? 'Create a free demo account to keep your favorites close.' : 'Log in to your local LuckyLane demo account.'}</p>
       <div className="auth-tabs"><button className={mode === 'register' ? 'selected' : ''} onClick={() => { setMode('register'); setError(''); }}>Sign up</button><button className={mode === 'login' ? 'selected' : ''} onClick={() => { setMode('login'); setError(''); }}>Log in</button></div>
       <form className="auth-form" onSubmit={submit}>
         <label>Email address<input type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
@@ -301,22 +360,22 @@ function GameLogo({ game, compact = false }) {
   return <span className={`game-logo logo-palette-${game.palette} ${compact ? 'game-logo-compact' : ''}`} aria-hidden="true">
     <span className="game-logo-halo" />
     <span className="game-logo-orbit"><i>✦</i><i>✧</i><i>·</i></span>
-    <span className="game-logo-medallion"><span className="game-logo-icon">{game.emoji || '✦'}</span></span>
-    {!compact && <span className="game-logo-label">{game.mode}</span>}
+    <span className="game-logo-medallion"><span className={`game-logo-icon ${game.source === 'slotopol' ? 'slotopol-monogram' : ''}`}>{game.source === 'slotopol' ? game.mark : game.emoji || '✦'}</span></span>
+    {!compact && <span className="game-logo-label">{game.source === 'slotopol' ? game.provider : game.mode}</span>}
   </span>;
 }
 
-function GameCard({ game, index, favorite, onFavorite, onPlay, featured = false }) {
+function GameCard({ game, index, favorite, onFavorite, onPlay, featured = false, launching = false }) {
   return <article className={`game-card ${featured ? 'featured-card' : ''}`} style={{ '--card-delay': `${Math.min(index % 12, 8) * 28}ms` }}>
     <button className={`favorite-button ${favorite ? 'is-favorite' : ''}`} aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'} onClick={(event) => { event.stopPropagation(); onFavorite(game.id); }}>{favorite ? '♥' : '♡'}</button>
-    <button className={`game-art bg-${index % 8} game-art-${game.palette} cover-theme-${game.themeIndex}`} onClick={() => onPlay(game)} aria-label={`Play ${game.title}`}>
+    <button className={`game-art bg-${index % 8} game-art-${game.palette} cover-theme-${game.themeIndex}`} onClick={() => onPlay(game)} aria-label={launching ? `Opening ${game.title}` : `Play ${game.title}`} disabled={launching}>
       <div className="poster-gloss" /><div className="art-orbit orbit-one" /><div className="art-orbit orbit-two" />
-      <span className="cover-studio">LUCKY LANE <i>ORIGINAL</i></span><span className="cover-world">{game.themeIcon}</span><GameLogo game={game} />
-      <span className="cover-title">{game.title.replace(': ', '\n')}</span><span className="cover-mode">{game.mode.toUpperCase()} · DEMO PLAY</span>
+      <span className="cover-studio">{game.source === 'slotopol' ? game.provider : 'LUCKY LANE'} <i>{game.source === 'slotopol' ? 'SIMULATION' : 'ORIGINAL'}</i></span><span className="cover-world">{game.themeIcon}</span><GameLogo game={game} />
+      <span className="cover-title">{game.title.replace(': ', '\n')}</span><span className="cover-mode">{game.source === 'slotopol' ? game.mode === 'Keno' ? '80-NUMBER LOTTERY' : `${game.width} × ${game.height} REELS` : `${game.mode.toUpperCase()} · DEMO PLAY`}</span>
       {featured && <span className="hot-badge">✦ FEATURED</span>}
       <span className="play-overlay"><span>▶</span></span>
     </button>
-    <div className="game-info"><div><h3>{game.title}</h3><span className="game-type">{game.mode} <i>·</i> Demo credits</span></div><button className="play-button" aria-label={`Play ${game.title}`} onClick={() => onPlay(game)}>▶</button></div>
+    <div className="game-info"><div><h3>{game.title}</h3><span className="game-type">{game.source === 'slotopol' ? `${game.provider} · ${game.mode === 'Keno' ? '80-number lottery' : `${game.width}×${game.height} reels`}` : `${game.mode} · Demo credits`}</span></div><button className="play-button" aria-label={launching ? `Opening ${game.title}` : `Play ${game.title}`} onClick={() => onPlay(game)} disabled={launching}>{launching ? '…' : '▶'}</button></div>
   </article>;
 }
 
@@ -701,6 +760,141 @@ function ProfessionalGameModal({ game, balance, bet, setBet, onClose, onPlay, on
         {mode !== 'Blackjack' || !blackjackActive ? <button className={`button button-primary play-round pro-play-round ${mode === 'Crash' && crashRunning ? 'cash-out-button' : ''}`} onClick={primaryAction} disabled={(mode === 'Blackjack' && blackjackActive) || (mode === 'Mines' && mineActive && !revealed.length) || (mode === 'Tower' && towerActive && !towerFloor)}>{actionText[mode]} <span>↗</span></button> : null}
         <div className="modal-credit-row"><span>Demo balance <b>✦ {money(balance)} credits</b></span><button onClick={onRefill}>+ Free refill</button></div>
         <p className="demo-note">Demo credits only · No real money · LuckyLane Originals</p>
+      </div>
+    </section>
+  </div>;
+}
+
+function SlotopolConnectModal({ error, busy, onClose, onSubmit }) {
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return <div className="modal-backdrop auth-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+    <section className="auth-modal slotopol-connect" role="dialog" aria-modal="true" aria-labelledby="slotopol-title">
+      <button className="close-button auth-close" onClick={onClose} aria-label="Close Slotopol connection">×</button>
+      <div className="auth-brand"><span className="brand-mark">S</span></div>
+      <div className="auth-eyebrow">REAL GAME ENGINE</div>
+      <h2 id="slotopol-title">Connect Slotopol</h2>
+      <p className="auth-description">Your LuckyLane demo account is separate. Enter a Slotopol server account to use its distinct game rules, results, and wallet.</p>
+      <form className="auth-form" onSubmit={onSubmit}>
+        <label>Slotopol email<input name="email" type="email" autoComplete="username" defaultValue="dealer@example.org" required /></label>
+        <label>Server password<input name="secret" type="password" autoComplete="current-password" required /></label>
+        <label>Club ID<input name="clubId" type="number" min="1" step="1" defaultValue="1" required /></label>
+        {error && <p className="auth-error" role="alert">{error}</p>}
+        <button className="button button-primary auth-submit" disabled={busy}>{busy ? 'Connecting…' : 'Load game catalog'} <span>↗</span></button>
+      </form>
+      <p className="auth-legal">Local Slotopol seed: <code>dealer@example.org</code> / <code>LtpkAr</code>, club 1. This test account is public and for local demos only. The server must be running at <code>SLOTOPOL_API_URL</code>.</p>
+    </section>
+  </div>;
+}
+
+function buildSlotSpinPayload({ isKeno, game, bet, lineCount, pickedNumbers }) {
+  const body = { gid: game.gid, bet: Number(bet) };
+  if (isKeno) {
+    return { ...body, sel: [...pickedNumbers] };
+  }
+
+  const lineLimit = Number(game.lines) || 0;
+  const selectedLines = Number(lineCount) || 1;
+  if (lineLimit > 0 && Number.isFinite(selectedLines) && selectedLines >= 1) {
+    return { ...body, sel: Math.max(1, Math.min(Math.round(selectedLines), lineLimit)) };
+  }
+
+  return body;
+}
+
+function SlotopolGameModal({ game, session, onClose }) {
+  const [gameState, setGameState] = useState(game.initialState || {});
+  const [wallet, setWallet] = useState(game.wallet || 0);
+  const [bet, setBet] = useState(Number(game.initialState?.bet) || 1);
+  const [lineCount, setLineCount] = useState(Number(game.lines) || 1);
+  const [lastWins, setLastWins] = useState(null);
+  const [pickedNumbers, setPickedNumbers] = useState(() => Array.from({ length: 10 }, (_, index) => index + 1));
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [spins, setSpins] = useState(0);
+  const grid = Array.isArray(gameState.grid) ? gameState.grid : [];
+  const isKeno = game.mode === 'Keno';
+  const width = isKeno ? 80 : Number(game.width) || grid.length || 5;
+  const height = isKeno ? 1 : Number(game.height) || Math.max(3, ...grid.map((column) => Array.isArray(column) ? column.length : 0));
+  const symbols = ['🍒', '🍋', '🔔', '💎', '⭐', '🍀', '7️⃣', '👑', '🪙', '🃏', '🐉', '🌙', '🧿', '🌸', '🎲', '🪄'];
+  const amount = (value) => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  const visibleRows = Array.from({ length: height }, (_, row) => Array.from({ length: width }, (_, column) => grid[column]?.[row] ?? grid[row]?.[column] ?? 0));
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === 'Escape' && !busy) onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [busy, onClose]);
+  async function spin() {
+    if (busy) return;
+    if (isKeno && pickedNumbers.length < 1) {
+      setError('Choose between 1 and 10 numbers before drawing.');
+      return;
+    }
+    setBusy(true);
+    setError('');
+    try {
+      const attempts = [];
+      const baseBody = buildSlotSpinPayload({ isKeno, game, bet, lineCount, pickedNumbers });
+      const retryBody = { gid: game.gid, bet: Number(bet) };
+      attempts.push(baseBody);
+      if (!isKeno && Object.prototype.hasOwnProperty.call(baseBody, 'sel')) {
+        attempts.push(retryBody);
+      }
+
+      let response;
+      let lastError;
+      for (const body of attempts) {
+        try {
+          response = await slotopolRequest(isKeno ? '/keno/spin' : '/slot/spin', {
+            token: session.token,
+            method: 'POST',
+            body,
+          });
+          break;
+        } catch (reason) {
+          lastError = reason;
+          if (!isKeno && body.sel === undefined) throw reason;
+        }
+      }
+
+      if (!response) throw lastError;
+      if (response.game) setGameState(response.game);
+      if (Number.isFinite(Number(response.wallet))) setWallet(Number(response.wallet));
+      setLastWins(response.wins || null);
+      setSpins((current) => current + 1);
+    } catch (reason) {
+      setError(reason.message || 'The Slotopol server could not complete this spin.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && !busy && onClose()}>
+    <section className="game-modal slotopol-game-modal" role="dialog" aria-modal="true" aria-label={`${game.title} slot game`}>
+      <header className="modal-header"><div className="modal-title"><GameLogo game={game} compact /><div><h2>{game.title}</h2><p>{game.provider} <span>·</span> {isKeno ? '80-number draw' : `${game.width} × ${game.height} reels`}</p></div></div><button className="close-button" onClick={onClose} aria-label="Close game" disabled={busy}>×</button></header>
+      <div className="slotopol-game-body">
+        <div className="slotopol-game-banner"><span>{game.provider}</span><b>{game.title}</b><small>{isKeno ? 'SERVER-SIMULATED KENO' : 'SERVER-SIMULATED SLOT'}</small></div>
+        {isKeno ? <div className={`slotopol-keno-board ${busy ? 'slotopol-board-spinning' : ''}`} aria-label="Choose up to 10 numbers from 1 to 80">{Array.from({ length: 80 }, (_, index) => {
+          const number = index + 1;
+          const cell = Number(grid[index] || 0);
+          const chosen = pickedNumbers.includes(number);
+          const drawn = (cell & 2) === 2;
+          return <button type="button" key={number} className={`${chosen ? 'number-picked' : ''} ${drawn ? 'number-drawn' : ''} ${busy ? 'is-spinning' : ''}`} onClick={() => setPickedNumbers((current) => current.includes(number) ? current.filter((value) => value !== number) : current.length < 10 ? [...current, number] : current)} disabled={busy} aria-pressed={chosen}>{number}</button>;
+        })}</div> : <div className={`slotopol-reel-frame ${busy ? 'slotopol-frame-spinning' : ''}`} aria-live="polite">
+          {visibleRows.map((row, rowIndex) => <div className={`slotopol-reel-row ${busy ? 'is-spinning' : ''}`} key={rowIndex}>{row.map((symbol, columnIndex) => <span className={`slotopol-symbol ${busy ? 'is-spinning' : ''}`} key={`${rowIndex}-${columnIndex}`}>{symbols[Number(symbol) % symbols.length] || '✦'}</span>)}</div>)}
+        </div>}
+        <div className="slotopol-game-facts"><span><small>PROVIDER</small><b>{game.provider}</b></span><span><small>{isKeno ? 'BOARD' : 'REELS'}</small><b>{isKeno ? '80 numbers' : `${game.width} × ${game.height}`}</b></span><span><small>{isKeno ? 'YOUR PICKS' : 'LINES'}</small><b>{isKeno ? `${pickedNumbers.length} / 10` : game.lines || 'Variable'}</b></span><span><small>RTP OPTIONS</small><b>{Array.isArray(game.rtp) && game.rtp.length ? game.rtp.map((value) => `${Number(value).toFixed(2)}%`).join(' · ') : 'Server set'}</b></span></div>
+        <div className="slotopol-controls">
+          <label>Bet<input type="number" min="0.01" step="0.01" value={bet} onChange={(event) => setBet(event.target.value)} disabled={busy} /></label>
+          {!isKeno && <label>Lines<input type="number" min="1" max={game.lines || 1} step="1" value={lineCount} onChange={(event) => setLineCount(event.target.value)} disabled={busy} /></label>}
+          <div className="slotopol-wallet"><small>SERVER WALLET</small><b>{amount(wallet)}</b></div>
+        </div>
+        {error && <p className="slotopol-error" role="alert">{error}</p>}
+        {spins > 0 && <p className="slotopol-result" role="status">{isKeno ? `${Number(lastWins?.num) || 0} hits · ${amount(lastWins?.pay)} paid` : Array.isArray(lastWins) && lastWins.length ? `${lastWins.length} winning line${lastWins.length === 1 ? '' : 's'} reported by server` : 'No winning lines this spin.'}</p>}
+        <button className="button button-primary play-round slotopol-spin" onClick={spin} disabled={busy || Number(bet) <= 0 || (isKeno && pickedNumbers.length < 1)}>{busy ? 'Drawing…' : isKeno ? 'Draw numbers' : 'Spin reels'} <span>↗</span></button>
+        <p className="demo-note">Outcomes and balance are managed by your Slotopol server · Session {game.gid}</p>
       </div>
     </section>
   </div>;
